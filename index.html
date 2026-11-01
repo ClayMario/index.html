@@ -527,13 +527,20 @@ function nextOrExecute(){
   }
   executeTheory();
 }
-// Unique Theory ID, e.g. BT-7K3Q-9XA2. 32^8 (~1.1 trillion) combinations from a
-// crypto-random source; no 0/O/1/I so customers can read it back without mistakes.
-function newTheoryId(){
+// Theory ID = the design itself: same base + same icons (in the same order,
+// because order decides where each icon is printed) always gives the same ID,
+// whatever garment it's on. So a matching short, bikini and towel share one ID.
+// Uses stable names (pack + icon name), not list positions, so IDs survive
+// adding new icons to a pack. 40-bit hash -> 8 chars, no 0/O/1/I.
+function theoryIdFor(base, icons){
+  const recipe=String(base||"").toUpperCase()+"|"+icons.map(k=>k.split(":")[0]+":"+String(iconGlyph(k)[0]).toUpperCase()).join(",");
+  let h1=0xdeadbeef^recipe.length, h2=0x41c6ce57^recipe.length;
+  for(let i=0;i<recipe.length;i++){const ch=recipe.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+  h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
   const A="23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-  const b=new Uint8Array(8);
-  (window.crypto||window.msCrypto).getRandomValues(b);
-  let c="";for(let i=0;i<8;i++)c+=A[b[i]%32];
+  let n=BigInt(h2>>>0)*4294967296n+BigInt(h1>>>0), c="";
+  for(let i=0;i<8;i++){c=A[Number(n%32n)]+c;n/=32n;}
   return "BT-"+c.slice(0,4)+"-"+c.slice(4);
 }
 async function executeTheory(){
@@ -544,7 +551,7 @@ async function executeTheory(){
   t.textContent="CALCULATING";await wait(500);
   t.textContent="THEORY EXECUTED";await wait(450);
   o.classList.remove("active");
-  state.theory=newTheoryId();state.executed=true;
+  state.theory=theoryIdFor(state.base,state.icons);state.executed=true;
   document.getElementById("finalText").textContent="YOUR THEORY IS READY.";
   flicker();render();
 }
