@@ -257,7 +257,7 @@ body{
           <div class="question">YOUR THEORY</div>
           <div class="preview realisticPreviewFrame"><canvas id="realisticPreview" aria-label="Your realistic swim shorts theory"></canvas></div>
           <div class="final" id="finalText">READY WHEN YOU ARE.</div>
-          <div class="theory" id="theoryId">THEORY #000001</div>
+          <div class="theory" id="theoryId">THEORY #BT-····-····</div>
           <div class="actionRow">
             <button class="screenBtn primary" id="storeBtn" style="display:none" onclick="sendToStore()">CONTINUE TO STORE →</button>
             <button class="screenBtn secondary" id="startOverBtn" style="display:none" onclick="startOver()">START OVER</button>
@@ -282,7 +282,7 @@ body{
 <script>
 const state={
   step:1, product:null, base:null, bg:"#f4ead5",
-  packs:[], icons:[], layout:"SCATTER", theory:1, executed:false
+  packs:[], icons:[], layout:"SCATTER", theory:null, executed:false
 };
 const MAX_PACKS=3, MAX_ICONS=6, TOTAL_STEPS=5;
 const STORE_ORIGIN="*";
@@ -337,7 +337,7 @@ function render(){
   document.getElementById("backBtn").style.display=finished?"none":"inline-block";
   document.getElementById("storeBtn").style.display=finished?"inline-block":"none";
   document.getElementById("startOverBtn").style.display=finished?"inline-block":"none";
-  document.getElementById("theoryId").textContent=`THEORY #${String(state.theory).padStart(6,"0")}`;
+  document.getElementById("theoryId").textContent=`THEORY #${state.theory||"BT-····-····"}`;
   document.getElementById("finalText").textContent=state.executed?"YOUR THEORY IS READY.":"READY WHEN YOU ARE.";
   const productProgress=state.product?25:0;
   const baseProgress=state.base?25:0;
@@ -358,7 +358,7 @@ function renderTerminalLog(){
   if(state.base) lines.push(`> BASE: ${state.base}`);
   state.packs.forEach(k=>lines.push(`> WORLD: ${PACKS[k].name}`));
   state.icons.forEach(key=>lines.push(`> ELEMENT: ${iconGlyph(key)[0]}`));
-  if(state.executed) lines.push(`> THEORY #${String(state.theory).padStart(6,"0")}: EXECUTED`);
+  if(state.executed) lines.push(`> THEORY #${state.theory}: EXECUTED`);
   el.innerHTML=lines.slice(-6).map(x=>`<div>${x}</div>`).join("");
 }
 let realisticRenderToken=0;
@@ -527,6 +527,15 @@ function nextOrExecute(){
   }
   executeTheory();
 }
+// Unique Theory ID, e.g. BT-7K3Q-9XA2. 32^8 (~1.1 trillion) combinations from a
+// crypto-random source; no 0/O/1/I so customers can read it back without mistakes.
+function newTheoryId(){
+  const A="23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const b=new Uint8Array(8);
+  (window.crypto||window.msCrypto).getRandomValues(b);
+  let c="";for(let i=0;i<8;i++)c+=A[b[i]%32];
+  return "BT-"+c.slice(0,4)+"-"+c.slice(4);
+}
 async function executeTheory(){
   document.getElementById("mainActionBtn").disabled=true;
   document.getElementById("backBtn").disabled=true;
@@ -535,7 +544,7 @@ async function executeTheory(){
   t.textContent="CALCULATING";await wait(500);
   t.textContent="THEORY EXECUTED";await wait(450);
   o.classList.remove("active");
-  state.theory++;state.executed=true;
+  state.theory=newTheoryId();state.executed=true;
   document.getElementById("finalText").textContent="YOUR THEORY IS READY.";
   flicker();render();
 }
@@ -543,7 +552,7 @@ function back(){if(state.step>1){clickSound();state.step--;flicker();render()}}
 function startOver(){
   clickSound(140);
   state.step=1;state.product=null;state.base=null;state.bg="#f4ead5";
-  state.packs=[];state.icons=[];state.layout="SCATTER";state.executed=false;
+  state.packs=[];state.icons=[];state.layout="SCATTER";state.executed=false;state.theory=null;
   document.getElementById("mainActionBtn").disabled=false;
   document.getElementById("backBtn").disabled=false;
   flicker();render();
@@ -553,7 +562,7 @@ function sendToStore(){
   clickSound(180);
   const payload={
     type:"beach-theory-design-complete",
-    theoryId:"#"+String(state.theory).padStart(6,"0"),
+    theoryId:"#"+state.theory,
     product:state.product,base:state.base,
     packs:state.packs.map(k=>PACKS[k].name),
     icons:state.icons.map(k=>iconGlyph(k)[0]),
