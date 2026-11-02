@@ -721,9 +721,11 @@ function setUnlocks(list){
   unlocked.clear();unlockedAll=false;
   (list||[]).forEach(x=>{const v=String(x).trim().toUpperCase();if(v==="ALL")unlockedAll=true;else if(v)unlocked.add(v);});
 }
-let lockMsg=null, lockMsgTimer=null;
+let lockMsg=null, lockMsgTimer=null, storeLoggedIn=null;
 function showLock(name,hint){
   clickSound(140);lockMsg=[`> 🔒 ${name} IS LOCKED`,`> ${hint}`];
+  if(storeLoggedIn===false) lockMsg.push("> GOT A CODE? LOG IN TO USE IT");
+  else if(storeLoggedIn) lockMsg.push("> GOT A CODE? ENTER IT ON OUR UNLOCK PAGE");
   clearTimeout(lockMsgTimer);lockMsgTimer=setTimeout(()=>{lockMsg=null;renderTerminalLog();},4500);
   renderTerminalLog();
 }
@@ -1040,8 +1042,11 @@ function loadTheory(text){
   return {ok:true,theoryId:state.loadedTheory};
 }
 window.addEventListener("message",e=>{
-  const u=e.data; if(u&&u.type==="beach-theory-unlocks"){setUnlocks(u.unlocked);render();}
+  const u=e.data; if(!u||u.type!=="beach-theory-unlocks"||e.source!==window.parent||window.parent===window) return;
+  setUnlocks(u.unlocked);storeLoggedIn=!!u.loggedIn;render();
 });
+// ask the store (parent page) for this customer's unlocks
+if(window.parent!==window){try{window.parent.postMessage({type:"beach-theory-ready"},"*");}catch(e){}}
 window.addEventListener("message",e=>{
   const d=e.data; if(!d||d.type!=="beach-theory-load") return;
   const r=loadTheory(d.theoryId);
