@@ -618,7 +618,7 @@ body{background:radial-gradient(ellipse at 50% 10%,#142b48 0%,#07142b 44%,#050a1
 
         <div class="section" data-step="4">
           <div class="question">SELECT YOUR<br>ELEMENTS</div>
-          <div class="phaseOptions"><div id="icons"></div><div class="hint">SELECT UP TO 6 ICONS</div></div>
+          <div class="phaseOptions"><div id="icons"></div><div class="hint">SELECT UP TO 3 ICONS</div></div>
         </div>
 
         <div class="livePreviewPane" id="livePreviewPane">
@@ -659,12 +659,13 @@ body{background:radial-gradient(ellipse at 50% 10%,#142b48 0%,#07142b 44%,#050a1
   <div class="footer">THE BEACH THEORY · TERMINAL CONFIGURATOR · MASTER PRINT MAP</div>
 </div>
 
+<script src="btc-pattern.js"></script>
 <script>
 const state={
   step:1, product:null, base:null, bg:"#f4ead5",
   packs:[], icons:[], layout:"SCATTER", theory:null, executed:false
 };
-const MAX_PACKS=3, MAX_ICONS=6, TOTAL_STEPS=5;
+const MAX_PACKS=3, MAX_ICONS=3, TOTAL_STEPS=5;   // icons per design: 1-3 (older Theory IDs with up to 6 still open)
 const STORE_ORIGIN="*";
 
 const products=[["SWIM SHORTS","🩳"],["BIKINI","👙"],["ONE PIECE","🩱"],["TOWEL","🏖️"],["BUCKET HAT","👒"]];
@@ -822,10 +823,10 @@ const ASSET_LIBRARY={"DUCKS:0":DUCK_ASSET,"DUCKS:1":FROG_ASSET,"SNACKS:6":LEMON_
 function loadImage(src){return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=src;});}
 function hexRgb(hex){const h=hex.replace('#','');return [parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)];}
 // Per-garment test mockups (white photos, shading in the grey channel).
-// Swim shorts keep the original renderer below. The print is the same all-over
-// pattern as the Theory card swatch: tile 1.25:1, rows shifted half a tile,
-// order A-B-C / B-C-A / C-A-B, then cut to the garment. tile = tile width in px.
-const GARMENT_MOCKUPS={"BIKINI":{"src":"mockups/bikini.webp","tile":118,"cx":408,"cy":47},"ONE PIECE":{"src":"mockups/onepiece.webp","tile":150,"cx":408,"cy":47},"TOWEL":{"src":"mockups/towel.webp","tile":170,"cx":409,"cy":42},"BUCKET HAT":{"src":"mockups/buckethat.webp","tile":150,"cx":409,"cy":378}};
+// Every garment uses this renderer. The print is the shared repeat tile from
+// btc-pattern.js (also used by the Theory card and the cart), cut to the garment.
+// tile = spacing between motifs in px on the 819x1024 canvas.
+const GARMENT_MOCKUPS={"SWIM SHORTS":{"src":"mockups/shorts.webp","tile":140,"cx":411,"cy":209},"BIKINI":{"src":"mockups/bikini.webp","tile":118,"cx":408,"cy":47},"ONE PIECE":{"src":"mockups/onepiece.webp","tile":150,"cx":408,"cy":47},"TOWEL":{"src":"mockups/towel.webp","tile":170,"cx":409,"cy":42},"BUCKET HAT":{"src":"mockups/buckethat.webp","tile":150,"cx":409,"cy":378}};
 const GARMENT_LABELS={"SWIM SHORTS":"swim shorts","BIKINI":"bikini","ONE PIECE":"one piece","TOWEL":"towel","BUCKET HAT":"bucket hat"};
 async function renderGarmentMockup(mk,token,canvases){
   const W=819,H=1024,canvas=canvases[0],ctx=canvas.getContext('2d');
@@ -840,19 +841,9 @@ async function renderGarmentMockup(mk,token,canvases){
   const visuals=[];
   for(const key of state.icons){const v=ASSET_LIBRARY[key]||iconGlyph(key)?.[1];if(typeof v==='string'&&v.startsWith('data:image/')){try{visuals.push(await loadImage(v));}catch(e){}}else if(typeof v==='string')visuals.push(v);}
   if(token!==realisticRenderToken)return;
-  const art=layer(),ac=art.getContext('2d'),n=visuals.length;
-  const cw=mk.tile,rh=cw/1.25,size=Math.min(cw,rh)*.56;
-  if(n)for(let r=-1;r*rh<H+rh;r++){
-    const offset=(((r%2)+2)%2)?cw/2:0;
-    for(let c=Math.floor(-mk.cx/cw)-1;c*cw<W;c++){
-      const idx=(((c+r)%n)+n)%n,v=visuals[idx];
-      const x=mk.cx+c*cw+offset,y=mk.cy+r*rh+rh/2,rot=((r*7+c*13)%5-2)*.06;
-      ac.save();ac.translate(x,y);ac.rotate(rot);
-      if(typeof v==='string'){ac.font=`${Math.round(size*.82)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;ac.textAlign='center';ac.textBaseline='middle';ac.fillText(v,0,size*.04);}
-      else{const s2=size*1.3;ac.drawImage(v,-s2/2,-s2/2,s2,s2);}
-      ac.restore();
-    }
-  }
+  // the print: one repeat tile (half-drop grid, fixed scatter), see btc-pattern.js
+  const art=layer(),ac=art.getContext('2d');
+  if(visuals.length)BTCPattern.draw(ac,W,H,mk.tile,mk.cx,mk.cy,visuals,mk.tile*.71);
   ac.globalCompositeOperation='destination-in';ac.drawImage(photo,0,0,W,H);
   // folds and shadows from the photo on top of everything
   ctx.drawImage(base,0,0);ctx.drawImage(art,0,0);
@@ -1061,7 +1052,7 @@ function decodeTheoryId(text){
   const count=Number(n&7n), b=Number(n>>3n);
   const base=THEORY_BASES[b];
   if(!base||!bases.some(x=>x[0]===base)) return {error:"This theory uses a base colour we no longer offer."};
-  if(count<1||count>MAX_ICONS) return {error:"That Theory ID doesn't exist. Check for typos."};
+  if(count<1||count>6) return {error:"That Theory ID doesn't exist. Check for typos."};
   const icons=[];
   for(const code of codes.slice(0,count)){
     const name=THEORY_ICONS[code]; if(!name) return {error:"That Theory ID doesn't exist. Check for typos."};
