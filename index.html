@@ -579,6 +579,13 @@ body{background:radial-gradient(ellipse at 50% 10%,#142b48 0%,#07142b 44%,#050a1
 .machine-logo{position:absolute;left:50%;top:55.1%;width:32%;transform:translateX(-50%);z-index:13;pointer-events:none;display:block}
 .machine-logo img{display:block;width:100%;height:auto;object-fit:contain;border-radius:2px;box-shadow:0 2px 4px rgba(48,33,20,.14)}
 
+/* Collectables: locked packs and icons show as a dark silhouette with a padlock */
+.option.locked{border-style:dashed;border-color:rgba(149,241,220,.32);background:linear-gradient(110deg,rgba(4,18,32,.92),rgba(10,24,40,.85));color:rgba(233,253,249,.5);cursor:help}
+.option.locked:hover{transform:none;background:linear-gradient(110deg,rgba(6,24,40,.95),rgba(12,30,50,.9));border-color:rgba(255,211,106,.6);box-shadow:none}
+.option.locked .icon{filter:grayscale(1) brightness(.35) contrast(1.2);opacity:.85}
+.option.locked .icon img{filter:brightness(0) invert(.18)}
+.lockBadge{position:absolute;top:3px;right:4px;font-size:10px;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+.hint.collected{color:#ffd36a;margin-top:3px}
 </style>
 </head>
 <body>
@@ -606,7 +613,7 @@ body{background:radial-gradient(ellipse at 50% 10%,#142b48 0%,#07142b 44%,#050a1
 
         <div class="section" data-step="3">
           <div class="question">CHOOSE YOUR<br>WORLD</div>
-          <div class="phaseOptions"><div class="optionGrid" id="packs"></div><div class="hint">SELECT UP TO 3 PACKS</div></div>
+          <div class="phaseOptions"><div class="optionGrid" id="packs"></div><div class="hint">SELECT UP TO 3 PACKS</div><div class="hint collected" id="packsCollected"></div></div>
         </div>
 
         <div class="section" data-step="4">
@@ -683,6 +690,45 @@ const PACKS={
   EGYPT:{name:"EGYPT",emoji:"🏺",icons:[["EYE","𓂀"],["PALM","🌴"],["SUN","☀️"],["CAMEL","🐪"],["SCORPION","🦂"],["WAVE","🌊"]]},
   DUCKS:{name:"RUBBER DUCKS",emoji:"🐤",icons:[["RUBBER DUCK",DUCK_ASSET],["FROG",FROG_ASSET]]}
 };
+// ===== COLLECTABLES: what is locked, and how to unlock it =====
+// !! PLACEHOLDER PICKS !! Change these before launch. Anything not listed here
+// is open to everyone. The text is the hint customers see on a locked item.
+// Packs use their key from PACKS; single icons use "PACK:ICON NAME".
+const LOCKED_PACKS={
+  EGYPT:"UNLOCKED AT OUR LAUNCH EVENT",
+  DUCKS:"SCAN THE QR CODE ON YOUR PACKAGING",
+  SPEED:"WIN A #BEACHTHEORY CHALLENGE"
+};
+const LOCKED_ICONS={
+  "SEA:WHALE":"RARE DROP: SAHEL BEACH DAY",
+  "COSMOS:ALIEN":"FOLLOW @THEBEACHTHEORY TO UNLOCK"
+};
+// What this customer has unlocked. Filled by the store (message
+// "beach-theory-unlocks") once accounts are connected. For testing:
+// ?unlocked=EGYPT,SEA:WHALE  or  ?unlocked=all
+const unlocked=new Set();
+let unlockedAll=false;
+function packLocked(k){return !!LOCKED_PACKS[k]&&!unlockedAll&&!unlocked.has(k);}
+function iconLockName(key){const [p,i]=key.split(":");return p+":"+String(PACKS[p].icons[+i][0]).toUpperCase();}
+function iconLocked(key){const n=iconLockName(key);return !!LOCKED_ICONS[n]&&!unlockedAll&&!unlocked.has(n);}
+function lockedInDesign(){
+  const out=[];
+  state.packs.forEach(k=>{if(packLocked(k))out.push(PACKS[k].name);});
+  state.icons.forEach(k=>{if(iconLocked(k)&&!packLocked(k.split(":")[0]))out.push(iconGlyph(k)[0]);});
+  return out;
+}
+function setUnlocks(list){
+  unlocked.clear();unlockedAll=false;
+  (list||[]).forEach(x=>{const v=String(x).trim().toUpperCase();if(v==="ALL")unlockedAll=true;else if(v)unlocked.add(v);});
+}
+let lockMsg=null, lockMsgTimer=null, storeLoggedIn=null;
+function showLock(name,hint){
+  clickSound(140);lockMsg=[`> 🔒 ${name} IS LOCKED`,`> ${hint}`];
+  if(storeLoggedIn===false) lockMsg.push("> GOT A CODE? LOG IN TO USE IT");
+  else if(storeLoggedIn) lockMsg.push("> GOT A CODE? ENTER IT ON OUR UNLOCK PAGE");
+  clearTimeout(lockMsgTimer);lockMsgTimer=setTimeout(()=>{lockMsg=null;renderTerminalLog();},4500);
+  renderTerminalLog();
+}
 
 let audioCtx=null;
 function clickSound(freq=900){
@@ -711,7 +757,9 @@ function render(){
   document.getElementById("storeBtn").style.display=finished?"inline-block":"none";
   document.getElementById("startOverBtn").style.display=finished?"inline-block":"none";
   document.getElementById("theoryId").textContent=`THEORY #${state.theory||"BT-····-····-····"}`;
-  document.getElementById("finalText").textContent=state.executed?"YOUR THEORY IS READY.":"READY WHEN YOU ARE.";
+  const lockedNow=lockedInDesign();
+  document.getElementById("finalText").textContent=state.executed?"YOUR THEORY IS READY.":lockedNow.length&&state.step===TOTAL_STEPS?`🔒 LOCKED: ${lockedNow.join(", ")}. UNLOCK TO ORDER.`:"READY WHEN YOU ARE.";
+  if(lockedNow.length&&state.step===TOTAL_STEPS&&!state.executed) document.getElementById("mainActionBtn").disabled=true;
   const productProgress=state.product?25:0;
   const baseProgress=state.base?25:0;
   const worldProgress=Math.round((state.packs.length/MAX_PACKS)*25);
@@ -733,6 +781,9 @@ function renderTerminalLog(){
   state.icons.forEach(key=>lines.push(`> ELEMENT: ${iconGlyph(key)[0]}`));
   if(state.executed) lines.push(`> THEORY #${state.theory}: EXECUTED`);
   if(state.loadedTheory&&state.step===1) lines.push(`> THEORY #${state.loadedTheory} LOADED`,`> CHOOSE THE PIECE TO PRINT IT ON`);
+  const locked=lockedInDesign();
+  if(locked.length&&state.step===TOTAL_STEPS) lines.push(`> 🔒 LOCKED: ${locked.join(", ")}`,`> UNLOCK THEM TO ORDER THIS THEORY`);
+  if(lockMsg) lines.push(...lockMsg);
   el.innerHTML=lines.slice(-6).map(x=>`<div>${x}</div>`).join("");
 }
 let realisticRenderToken=0;
@@ -853,13 +904,17 @@ async function renderRealisticPreview(){
     canvases.slice(1).forEach(c=>c.getContext('2d').drawImage(canvas,0,0));
   }catch(e){ctx.fillStyle='#eee';ctx.fillRect(0,0,W,H);ctx.fillStyle='#222';ctx.font='18px sans-serif';ctx.fillText('PREVIEW ERROR',30,50);canvases.slice(1).forEach(c=>c.getContext('2d').drawImage(canvas,0,0));}
 }
-function makeButton(label,icon,selected,disabled,fn){
-  const b=document.createElement("button");b.className="option"+(selected?" selected":"");b.disabled=disabled;
+function makeButton(label,icon,selected,disabled,fn,lockHint){
+  const b=document.createElement("button");b.className="option"+(selected?" selected":"")+(lockHint?" locked":"");b.disabled=disabled&&!lockHint;
+  if(lockHint){b.setAttribute("aria-label",label+", locked. "+lockHint.toLowerCase());b.title="Locked: "+lockHint.toLowerCase();}
   if(icon){
     const isImage=typeof icon==="string" && icon.startsWith("data:image/");
     b.innerHTML=isImage?`<span class="icon"><img src="${icon}" style="width:28px;height:28px;object-fit:contain;display:block"></span>`:`<span class="icon">${icon}</span>`;
   }
-  b.innerHTML+=`<span class="tiny">${label}</span>`;b.onclick=fn;return b;
+  b.innerHTML+=`<span class="tiny">${label}</span>`;
+  if(lockHint){b.innerHTML+=`<span class="lockBadge" aria-hidden="true">🔒</span>`;b.onclick=()=>showLock(label,lockHint);}
+  else b.onclick=fn;
+  return b;
 }
 function renderProducts(){
   const e=document.getElementById("products");e.innerHTML="";
@@ -874,7 +929,10 @@ function renderPacks(){
   Object.entries(PACKS).forEach(([k,p])=>e.appendChild(makeButton(p.name,p.emoji,state.packs.includes(k),!state.packs.includes(k)&&state.packs.length>=MAX_PACKS,()=>{
     clickSound(); if(state.packs.includes(k)){state.packs=state.packs.filter(x=>x!==k);state.icons=state.icons.filter(x=>!x.startsWith(k+":"))}
     else state.packs.push(k); state.executed=false;render()
-  })))
+  },packLocked(k)?LOCKED_PACKS[k]:null)));
+  const keys=Object.keys(PACKS), got=keys.filter(k=>!packLocked(k)).length;
+  const c=document.getElementById("packsCollected");
+  if(c)c.textContent=got<keys.length?`WORLDS COLLECTED ${got} / ${keys.length}`:"";
 }
 function renderIcons(){
   const e=document.getElementById("icons");e.innerHTML="";
@@ -883,11 +941,11 @@ function renderIcons(){
     const p=PACKS[k],wrap=document.createElement("div");wrap.className="packGroup";
     const lab=document.createElement("div");lab.className="packLabel";lab.textContent=`${p.emoji} ${p.name}`;wrap.appendChild(lab);
     const grid=document.createElement("div");grid.className="optionGrid";
-    p.icons.forEach(([n,g],i)=>grid.appendChild(makeButton(n,g,state.icons.includes(k+":"+i),!state.icons.includes(k+":"+i)&&state.icons.length>=MAX_ICONS,()=>{
-      clickSound();const key=k+":"+i;
+    p.icons.forEach(([n,g],i)=>{const key=k+":"+i;grid.appendChild(makeButton(n,g,state.icons.includes(key),!state.icons.includes(key)&&state.icons.length>=MAX_ICONS,()=>{
+      clickSound();
       if(state.icons.includes(key)) state.icons=state.icons.filter(x=>x!==key); else state.icons.push(key);
       state.executed=false;render()
-    })));
+    },(iconLocked(key)&&!state.icons.includes(key))?LOCKED_ICONS[iconLockName(key)]:null))});
     wrap.appendChild(grid);e.appendChild(wrap)
   })
 }
@@ -900,6 +958,7 @@ function nextOrExecute(){
     if(state.step===4&&!state.icons.length) return;
     state.step++;flicker();render();return;
   }
+  if(lockedInDesign().length){showLock(lockedInDesign()[0],"UNLOCK IT TO ORDER THIS THEORY");return;}
   executeTheory();
 }
 // ===== THEORY ID: the design itself, coded so it can be read back =====
@@ -983,6 +1042,12 @@ function loadTheory(text){
   return {ok:true,theoryId:state.loadedTheory};
 }
 window.addEventListener("message",e=>{
+  const u=e.data; if(!u||u.type!=="beach-theory-unlocks"||e.source!==window.parent||window.parent===window) return;
+  setUnlocks(u.unlocked);storeLoggedIn=!!u.loggedIn;render();
+});
+// ask the store (parent page) for this customer's unlocks
+if(window.parent!==window){try{window.parent.postMessage({type:"beach-theory-ready"},"*");}catch(e){}}
+window.addEventListener("message",e=>{
   const d=e.data; if(!d||d.type!=="beach-theory-load") return;
   const r=loadTheory(d.theoryId);
   try{e.source&&e.source.postMessage({type:"beach-theory-load-result",ok:r.ok,error:r.error||null,theoryId:r.theoryId||null},e.origin==="null"?"*":e.origin);}catch(err){}
@@ -1010,6 +1075,7 @@ function startOver(){
 }
 
 function sendToStore(){
+  if(lockedInDesign().length) return;
   clickSound(180);
   const payload={
     type:"beach-theory-design-complete",
@@ -1021,6 +1087,7 @@ function sendToStore(){
   };
   window.parent.postMessage(payload,STORE_ORIGIN);
 }
+(function(){const u=new URLSearchParams(location.search).get("unlocked");if(u)setUnlocks(u.split(","));})();
 render();
 (function(){const q=new URLSearchParams(location.search).get("theory");if(q)loadTheory(q);})();
 </script>
