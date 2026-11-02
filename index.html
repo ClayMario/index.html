@@ -1095,7 +1095,14 @@ function sendToStore(){
 }
 (function(){const u=new URLSearchParams(location.search).get("unlocked");if(u)setUnlocks(u.split(","));})();
 render();
-(function(){const q=new URLSearchParams(location.search).get("theory");if(q)loadTheory(q);})();
+(function(){
+  // ?product=BIKINI picks the garment; ?theory=BT-... loads a design (the store's Theory card links use both)
+  const qs=new URLSearchParams(location.search);
+  const want=String(qs.get("product")||"").trim().toUpperCase();
+  const prod=products.find(([n])=>n===want);
+  if(prod){state.product=prod[0];render();}
+  const q=qs.get("theory");if(q)loadTheory(q);
+})();
 </script>
 
 <script>
