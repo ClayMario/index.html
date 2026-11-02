@@ -9,7 +9,8 @@
      3+ icons: index = (q + k * row) mod n on axial grid coordinates (k per n);
      2 icons: a diamond grid where rows alternate, so the nearest neighbours
      are always the other icon.
-   - Spacing: motifs sit 1.3x the caller's step apart, leaving open background.
+   - Spacing: motifs sit 1.3x the caller's step apart and are drawn at 85% of
+     the caller's size, leaving open background.
    - Even visual weight: image icons are trimmed to their visible outline first,
      and sized by area (capped for long shapes), so a slim whale carries the
      same visual weight as a round duck.
@@ -26,6 +27,7 @@
   var K = { 1: 0, 2: 0, 3: 2, 4: 2, 5: 4, 6: 2 };
   function mod(a, m) { return ((a % m) + m) % m; }
   var SPACING = 1.3;   // gap between motifs, relative to the step a caller passes
+  var MOTIF = 0.85;    // motif size, relative to the size a caller passes
   function slots(W, H, step, ox, oy, n) {
     step *= SPACING;
     // 2 icons: a diamond grid (rows half a step apart, alternating icons by row), so
@@ -67,7 +69,7 @@
   // draw the print. icons[i] is an Image or an emoji string; size = motif size in px
   function draw(ctx, W, H, step, ox, oy, icons, size) {
     var n = icons.length; if (!n) return;
-    icons = icons.map(trim);
+    icons = icons.map(trim); size *= MOTIF;
     slots(W, H, step, ox, oy, n).forEach(function (s) {
       var v = icons[s.idx], z = size * s.scale;
       ctx.save(); ctx.translate(s.x, s.y); ctx.rotate(s.rot); if (s.flip) ctx.scale(-1, 1);
