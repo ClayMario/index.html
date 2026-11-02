@@ -838,7 +838,7 @@ function hexRgb(hex){const h=hex.replace('#','');return [parseInt(h.slice(0,2),1
 // Every garment uses this renderer. The print is the shared repeat tile from
 // btc-pattern.js (also used by the Theory card and the cart), cut to the garment.
 // tile = spacing between motifs in px on the 819x1024 canvas.
-const GARMENT_MOCKUPS={"SWIM SHORTS":{"src":"mockups/shorts.webp","tile":140,"cx":411,"cy":209},"BIKINI":{"src":"mockups/bikini.webp","tile":118,"cx":408,"cy":47},"ONE PIECE":{"src":"mockups/onepiece.webp","tile":150,"cx":408,"cy":47},"TOWEL":{"src":"mockups/towel.webp","tile":170,"cx":409,"cy":42},"BUCKET HAT":{"src":"mockups/buckethat.webp","tile":150,"cx":409,"cy":378}};
+const GARMENT_MOCKUPS={"SWIM SHORTS":{"src":"mockups/shorts.webp","tile":140,"cx":411,"cy":209},"BIKINI":{"src":"mockups/bikini.webp","tile":70,"motif":0.95,"cx":408,"cy":47},"ONE PIECE":{"src":"mockups/onepiece.webp","tile":150,"cx":408,"cy":47},"TOWEL":{"src":"mockups/towel.webp","tile":170,"cx":409,"cy":42},"BUCKET HAT":{"src":"mockups/buckethat.webp","tile":92,"motif":0.92,"cx":409,"cy":378}};
 const GARMENT_LABELS={"SWIM SHORTS":"swim shorts","BIKINI":"bikini","ONE PIECE":"one piece","TOWEL":"towel","BUCKET HAT":"bucket hat"};
 async function renderGarmentMockup(mk,token,canvases){
   const W=819,H=1024,canvas=canvases[0],ctx=canvas.getContext('2d');
@@ -855,7 +855,7 @@ async function renderGarmentMockup(mk,token,canvases){
   if(token!==realisticRenderToken)return;
   // the print: one repeat tile (half-drop grid, fixed scatter), see btc-pattern.js
   const art=layer(),ac=art.getContext('2d');
-  if(visuals.length)BTCPattern.draw(ac,W,H,mk.tile,mk.cx,mk.cy,visuals,mk.tile*.71);
+  if(visuals.length)BTCPattern.draw(ac,W,H,mk.tile,mk.cx,mk.cy,visuals,mk.tile*(mk.motif||.71));   // small garments: tighter grid, icons kept readable
   ac.globalCompositeOperation='destination-in';ac.drawImage(photo,0,0,W,H);
   // folds and shadows from the photo on top of everything
   ctx.drawImage(base,0,0);ctx.drawImage(art,0,0);
