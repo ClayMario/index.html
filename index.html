@@ -691,8 +691,9 @@ const PACKS={
   DUCKS:{name:"RUBBER DUCKS",emoji:"🐤",icons:[["RUBBER DUCK",DUCK_ASSET],["FROG",FROG_ASSET]]}
 };
 // ===== COLLECTABLES: what is locked, and how to unlock it =====
-// !! PLACEHOLDER PICKS !! Change these before launch. Anything not listed here
-// is open to everyone. The text is the hint customers see on a locked item.
+// The real list lives in the store (Shopify admin: Settings > Custom data >
+// Shop > "Locked packs and icons") and is sent in with the customer's unlocks.
+// These are only the fallback used when the terminal runs outside the store.
 // Packs use their key from PACKS; single icons use "PACK:ICON NAME".
 const LOCKED_PACKS={
   EGYPT:"UNLOCKED AT OUR LAUNCH EVENT",
@@ -716,6 +717,11 @@ function lockedInDesign(){
   state.packs.forEach(k=>{if(packLocked(k))out.push(PACKS[k].name);});
   state.icons.forEach(k=>{if(iconLocked(k)&&!packLocked(k.split(":")[0]))out.push(iconGlyph(k)[0]);});
   return out;
+}
+function setLocks(locks){
+  if(!locks||typeof locks!=="object") return;
+  const put=(target,src)=>{Object.keys(target).forEach(k=>delete target[k]);Object.entries(src||{}).forEach(([k,v])=>{target[String(k).toUpperCase()]=String(v||"LOCKED").toUpperCase();});};
+  put(LOCKED_PACKS,locks.packs);put(LOCKED_ICONS,locks.icons);
 }
 function setUnlocks(list){
   unlocked.clear();unlockedAll=false;
@@ -1043,7 +1049,7 @@ function loadTheory(text){
 }
 window.addEventListener("message",e=>{
   const u=e.data; if(!u||u.type!=="beach-theory-unlocks"||e.source!==window.parent||window.parent===window) return;
-  setUnlocks(u.unlocked);storeLoggedIn=!!u.loggedIn;render();
+  setLocks(u.locks);setUnlocks(u.unlocked);storeLoggedIn=!!u.loggedIn;render();
 });
 // ask the store (parent page) for this customer's unlocks
 if(window.parent!==window){try{window.parent.postMessage({type:"beach-theory-ready"},"*");}catch(e){}}
