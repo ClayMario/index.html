@@ -5,9 +5,11 @@
      fixed nudge, tilt, size and facing, so the print looks hand-scattered but
      repeats exactly, like a printed fabric roll. Tiles butt seamlessly and are
      simply cut at the garment's edge.
-   - Icons are assigned so neighbours differ and every icon is used equally:
-     index = (q + k * row) mod n on axial grid coordinates, k picked per n
-     (3-6 icons: no motif ever touches the same icon; 2 icons: alternate).
+   - Icons are assigned so neighbours never match and every icon is used equally:
+     3+ icons: index = (q + k * row) mod n on axial grid coordinates (k per n);
+     2 icons: a diamond grid where rows alternate, so the nearest neighbours
+     are always the other icon.
+   - Spacing: motifs sit 1.3x the caller's step apart, leaving open background.
    - Even visual weight: image icons are trimmed to their visible outline first,
      and sized by area (capped for long shapes), so a slim whale carries the
      same visual weight as a round duck.
@@ -23,8 +25,14 @@
   ];
   var K = { 1: 0, 2: 0, 3: 2, 4: 2, 5: 4, 6: 2 };
   function mod(a, m) { return ((a % m) + m) % m; }
+  var SPACING = 1.3;   // gap between motifs, relative to the step a caller passes
   function slots(W, H, step, ox, oy, n) {
-    var dy = step * 0.866, out = [], k = K[n] || 2;
+    step *= SPACING;
+    // 2 icons: a diamond grid (rows half a step apart, alternating icons by row), so
+    // every nearest neighbour is the other icon. 1 or 3+ icons: an even triangular grid.
+    var two = n === 2;
+    if (two) step *= 1.3;
+    var dy = two ? step / 2 : step * 0.866, out = [], k = K[n] || 2;
     var r0 = Math.floor(-oy / dy) - 1, r1 = Math.ceil((H - oy) / dy) + 1;
     for (var R = r0; R <= r1; R++) {
       var shift = mod(R, 2) ? step / 2 : 0;
@@ -36,7 +44,7 @@
           x: ox + C * step + shift + t[0] * step,
           y: oy + R * dy + t[1] * step,
           rot: t[2] * Math.PI / 180, scale: t[3], flip: !!t[4],
-          idx: n > 1 ? mod(q + k * R, n) : 0
+          idx: two ? mod(R, 2) : n > 1 ? mod(q + k * R, n) : 0
         });
       }
     }

@@ -981,8 +981,10 @@ function renderIcons(){
     const lab=document.createElement("div");lab.className="packLabel";lab.textContent=`${p.emoji} ${p.name}`;wrap.appendChild(lab);
     const grid=document.createElement("div");grid.className="optionGrid";
     p.icons.forEach(([n,g],i)=>{const key=k+":"+i;grid.appendChild(makeButton(n,g,state.icons.includes(key),!state.icons.includes(key)&&state.icons.length>=MAX_ICONS,()=>{
+      if(state.icons.includes(key)) state.icons=state.icons.filter(x=>x!==key);
+      else if(state.icons.length>=MAX_ICONS) return;   // hard cap: 3 icons per design
+      else state.icons.push(key);
       clickSound();
-      if(state.icons.includes(key)) state.icons=state.icons.filter(x=>x!==key); else state.icons.push(key);
       state.executed=false;render()
     },(iconLocked(key)&&!state.icons.includes(key))?LOCKED_ICONS[iconLockName(key)]:null))});
     wrap.appendChild(grid);e.appendChild(wrap)
