@@ -630,7 +630,7 @@ body{background:radial-gradient(ellipse at 50% 10%,#142b48 0%,#07142b 44%,#050a1
           <div class="question">YOUR THEORY</div>
           <div class="preview realisticPreviewFrame"><canvas id="realisticPreview" aria-label="Your realistic swim shorts theory"></canvas></div>
           <div class="final" id="finalText">READY WHEN YOU ARE.</div>
-          <div class="theory" id="theoryId">THEORY #BT-····-····</div>
+          <div class="theory" id="theoryId">THEORY #BT-····-····-····</div>
           <div class="actionRow">
             <button class="screenBtn primary" id="storeBtn" style="display:none" onclick="sendToStore()">ADD TO CART →</button>
             <button class="screenBtn secondary" id="startOverBtn" style="display:none" onclick="startOver()">START OVER</button>
@@ -710,7 +710,7 @@ function render(){
   document.getElementById("backBtn").style.display=finished?"none":"inline-block";
   document.getElementById("storeBtn").style.display=finished?"inline-block":"none";
   document.getElementById("startOverBtn").style.display=finished?"inline-block":"none";
-  document.getElementById("theoryId").textContent=`THEORY #${state.theory||"BT-····-····"}`;
+  document.getElementById("theoryId").textContent=`THEORY #${state.theory||"BT-····-····-····"}`;
   document.getElementById("finalText").textContent=state.executed?"YOUR THEORY IS READY.":"READY WHEN YOU ARE.";
   const productProgress=state.product?25:0;
   const baseProgress=state.base?25:0;
@@ -732,6 +732,7 @@ function renderTerminalLog(){
   state.packs.forEach(k=>lines.push(`> WORLD: ${PACKS[k].name}`));
   state.icons.forEach(key=>lines.push(`> ELEMENT: ${iconGlyph(key)[0]}`));
   if(state.executed) lines.push(`> THEORY #${state.theory}: EXECUTED`);
+  if(state.loadedTheory&&state.step===1) lines.push(`> THEORY #${state.loadedTheory} LOADED`,`> CHOOSE THE PIECE TO PRINT IT ON`);
   el.innerHTML=lines.slice(-6).map(x=>`<div>${x}</div>`).join("");
 }
 let realisticRenderToken=0;
@@ -894,28 +895,98 @@ function nextOrExecute(){
   clickSound(180);
   if(state.step<TOTAL_STEPS){
     if(state.step===1&&!state.product) return;
+    if(state.step===1&&state.loadedTheory){state.loadedTheory=null;state.step=TOTAL_STEPS;flicker();render();return;}
     if(state.step===3&&!state.packs.length) return;
     if(state.step===4&&!state.icons.length) return;
     state.step++;flicker();render();return;
   }
   executeTheory();
 }
-// Theory ID = the design itself: same base + same icons (in the same order,
-// because order decides where each icon is printed) always gives the same ID,
-// whatever garment it's on. So a matching short, bikini and towel share one ID.
-// Uses stable names (pack + icon name), not list positions, so IDs survive
-// adding new icons to a pack. 40-bit hash -> 8 chars, no 0/O/1/I.
+// ===== THEORY ID: the design itself, coded so it can be read back =====
+// An ID like BT-7K3Q-9XA2-M4PD holds the base colour and the icons (in order,
+// because order decides where each icon is printed). Same base + same icons =
+// same ID on any garment, and any ID can be loaded back into the terminal.
+//
+// !! APPEND-ONLY LISTS !! Old IDs point at positions in these two lists.
+// Add new bases/icons at the END only. Never reorder, rename or delete an
+// entry (to retire one, leave it here and just remove it from PACKS/bases).
+const THEORY_BASES=["CREAM","SOFT LAVENDER","BLACK","OCEAN","PINK","SUNSET","CHECKER"];
+const THEORY_ICONS=["COSMOS:PLANET","COSMOS:STAR","COSMOS:ASTRONAUT","COSMOS:UFO","COSMOS:SATELLITE","COSMOS:ALIEN",
+  "FRUIT:STRAWBERRY","FRUIT:BANANA","FRUIT:CHERRY","FRUIT:WATERMELON","FRUIT:ORANGE","FRUIT:PINEAPPLE",
+  "WILD:MONKEY","WILD:FROG","WILD:SNAKE","WILD:TIGER","WILD:CROC","WILD:LION",
+  "SCREEN:TV","SCREEN:CONTROLLER","SCREEN:POPCORN","SCREEN:CAMERA","SCREEN:TAPE","SCREEN:JOYSTICK",
+  "SNACKS:PIZZA","SNACKS:FRIES","SNACKS:BURGER","SNACKS:DONUT","SNACKS:ICE CREAM","SNACKS:SODA","SNACKS:LEMON TEA",
+  "SPEED:CAR","SPEED:MOTORCYCLE","SPEED:FLAG","SPEED:HELMET","SPEED:TIRE","SPEED:STOPWATCH",
+  "SEA:FISH","SEA:JELLYFISH","SEA:CORAL","SEA:SHELL","SEA:SHARK","SEA:OCTOPUS","SEA:RED SHRIMP","SEA:MANTA RAY","SEA:WHALE",
+  "EGYPT:EYE","EGYPT:PALM","EGYPT:SUN","EGYPT:CAMEL","EGYPT:SCORPION","EGYPT:WAVE",
+  "DUCKS:RUBBER DUCK","DUCKS:FROG"];
+// Layout: 4 bits base, 3 bits icon count, 6 x 8 bits icons = 55 bits, scrambled
+// (so similar designs don't look alike), as 11 characters + 1 typo-check character.
+const THEORY_ALPHABET="23456789ABCDEFGHJKLMNPQRSTUVWXYZ";      // no 0/O/1/I
+const THEORY_MASK=(1n<<55n)-1n, THEORY_MUL=0x5DEECE66Dn, THEORY_XOR=0x2A5F3C9B17E6Dn;
+function theoryInverse(a,m){let [r0,r1]=[a,m],[s0,s1]=[1n,0n];while(r1){const q=r0/r1;[r0,r1]=[r1,r0-q*r1];[s0,s1]=[s1,s0-q*s1];}return ((s0%m)+m)%m;}
+const THEORY_MUL_INV=theoryInverse(THEORY_MUL,1n<<55n);
+function theoryCheck(vals){let c=0;vals.forEach((v,i)=>{c+=(2*i+1)*v;});return c%32;}
+function iconRegistryName(key){const [p,i]=key.split(":");return p+":"+String(PACKS[p].icons[+i][0]).toUpperCase();}
 function theoryIdFor(base, icons){
-  const recipe=String(base||"").toUpperCase()+"|"+icons.map(k=>k.split(":")[0]+":"+String(iconGlyph(k)[0]).toUpperCase()).join(",");
-  let h1=0xdeadbeef^recipe.length, h2=0x41c6ce57^recipe.length;
-  for(let i=0;i<recipe.length;i++){const ch=recipe.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}
-  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
-  h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
-  const A="23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-  let n=BigInt(h2>>>0)*4294967296n+BigInt(h1>>>0), c="";
-  for(let i=0;i<8;i++){c=A[Number(n%32n)]+c;n/=32n;}
-  return "BT-"+c.slice(0,4)+"-"+c.slice(4);
+  const b=THEORY_BASES.indexOf(String(base||"").toUpperCase());
+  const codes=icons.map(k=>THEORY_ICONS.indexOf(iconRegistryName(k)));
+  if(b<0||codes.some(c=>c<0)) throw new Error("Theory ID: base or icon missing from THEORY_BASES / THEORY_ICONS");
+  let n=BigInt(b);n=(n<<3n)|BigInt(codes.length);
+  for(let i=0;i<6;i++) n=(n<<8n)|BigInt(codes[i]===undefined?0:codes[i]);
+  n=((n*THEORY_MUL)&THEORY_MASK)^THEORY_XOR;
+  const vals=[];for(let i=0;i<11;i++){vals.unshift(Number(n&31n));n>>=5n;}
+  vals.push(theoryCheck(vals));
+  const c=vals.map(v=>THEORY_ALPHABET[v]).join("");
+  return "BT-"+c.slice(0,4)+"-"+c.slice(4,8)+"-"+c.slice(8);
 }
+// Returns {base, icons:[current "PACK:index" keys], packs} or {error}
+function decodeTheoryId(text){
+  let s=String(text||"").toUpperCase().replace(/[\s#\-_.]/g,"");
+  if(s.startsWith("BT")) s=s.slice(2);
+  if(s.length!==12) return {error:"A Theory ID has 12 characters after BT, like BT-7K3Q-9XA2-M4PD."};
+  const vals=[...s].map(ch=>THEORY_ALPHABET.indexOf(ch));
+  if(vals.some(v=>v<0)) return {error:"That Theory ID has a character that can't be in one. Check for typos."};
+  if(theoryCheck(vals.slice(0,11))!==vals[11]) return {error:"That Theory ID doesn't exist. Check for typos."};
+  let n=0n;vals.slice(0,11).forEach(v=>{n=(n<<5n)|BigInt(v);});
+  n=((n^THEORY_XOR)*THEORY_MUL_INV)&THEORY_MASK;
+  const codes=[];for(let i=0;i<6;i++){codes.unshift(Number(n&255n));n>>=8n;}
+  const count=Number(n&7n), b=Number(n>>3n);
+  const base=THEORY_BASES[b];
+  if(!base||!bases.some(x=>x[0]===base)) return {error:"This theory uses a base colour we no longer offer."};
+  if(count<1||count>MAX_ICONS) return {error:"That Theory ID doesn't exist. Check for typos."};
+  const icons=[];
+  for(const code of codes.slice(0,count)){
+    const name=THEORY_ICONS[code]; if(!name) return {error:"That Theory ID doesn't exist. Check for typos."};
+    const [p,iconName]=name.split(":"); const pack=PACKS[p];
+    const idx=pack?pack.icons.findIndex(ic=>String(ic[0]).toUpperCase()===iconName):-1;
+    if(idx<0) return {error:"This theory uses an icon that has been retired."};
+    const key=p+":"+idx; if(icons.includes(key)) return {error:"That Theory ID doesn't exist. Check for typos."};
+    icons.push(key);
+  }
+  const packs=[...new Set(icons.map(k=>k.split(":")[0]))];
+  if(packs.length>MAX_PACKS) return {error:"That Theory ID doesn't exist. Check for typos."};
+  return {base,icons,packs};
+}
+// Load a design into the terminal: base + packs + icons are set, the customer
+// only picks the piece and goes straight to the final screen.
+function loadTheory(text){
+  const d=decodeTheoryId(text);
+  if(d.error) return {ok:false,error:d.error};
+  const b=bases.find(x=>x[0]===d.base);
+  state.base=d.base;state.bg=b?b[1]:state.bg;state.packs=d.packs;state.icons=d.icons;
+  state.executed=false;state.theory=null;state.loadedTheory=theoryIdFor(d.base,d.icons);
+  state.step=state.product?TOTAL_STEPS:1;
+  document.getElementById("mainActionBtn").disabled=false;document.getElementById("backBtn").disabled=false;
+  try{flicker();clickSound(520);}catch(e){}
+  render();
+  return {ok:true,theoryId:state.loadedTheory};
+}
+window.addEventListener("message",e=>{
+  const d=e.data; if(!d||d.type!=="beach-theory-load") return;
+  const r=loadTheory(d.theoryId);
+  try{e.source&&e.source.postMessage({type:"beach-theory-load-result",ok:r.ok,error:r.error||null,theoryId:r.theoryId||null},e.origin==="null"?"*":e.origin);}catch(err){}
+});
 async function executeTheory(){
   document.getElementById("mainActionBtn").disabled=true;
   document.getElementById("backBtn").disabled=true;
@@ -932,7 +1003,7 @@ function back(){if(state.step>1){clickSound();state.step--;flicker();render()}}
 function startOver(){
   clickSound(140);
   state.step=1;state.product=null;state.base=null;state.bg="#f4ead5";
-  state.packs=[];state.icons=[];state.layout="SCATTER";state.executed=false;state.theory=null;
+  state.packs=[];state.icons=[];state.layout="SCATTER";state.executed=false;state.theory=null;state.loadedTheory=null;
   document.getElementById("mainActionBtn").disabled=false;
   document.getElementById("backBtn").disabled=false;
   flicker();render();
@@ -951,6 +1022,7 @@ function sendToStore(){
   window.parent.postMessage(payload,STORE_ORIGIN);
 }
 render();
+(function(){const q=new URLSearchParams(location.search).get("theory");if(q)loadTheory(q);})();
 </script>
 
 <script>
