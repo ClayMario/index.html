@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Beach Theory — Terminal Configurator</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;700&family=VT323&display=swap');
 
 :root{
   --ink:#151b17; --cream:#e8dfc9; --crt:#17231d; --crt2:#20382d;
@@ -659,6 +659,176 @@ body{background:radial-gradient(ellipse at 50% 10%,#142b48 0%,#07142b 44%,#050a1
  .overlay{position:absolute;inset:0}
  .execText{font-size:13px;padding:0 20px}
 }
+
+/* =====================================================================
+   PHOSPHOR + COLLECTOR SKIN
+   The screen is a monochrome amber phosphor terminal. The only full colour
+   on it is what the customer is making: collectible cards (garments,
+   fabric chips, booster packs, icon cards) and the garment itself.
+   ===================================================================== */
+:root{
+ --ph:#ffb54a; --ph-hi:#ffe2a8; --ph-mid:#d58a2c; --ph-dim:rgba(255,181,74,.42); --ph-faint:rgba(255,181,74,.14);
+ --glass:#0c0803; --card:#f4ead7; --card-2:#e9dcc2; --ink:#20170d; --ink-2:#6d5a43;
+ --vt:"VT323","Courier New",monospace; --sans:"Space Grotesk",Arial,sans-serif;
+}
+/* the glass */
+html body .crt{
+ background:radial-gradient(ellipse 120% 90% at 50% 40%,#1c1206 0%,#0e0904 55%,#060402 100%)!important;
+ color:var(--ph);
+ box-shadow:inset 0 0 60px rgba(0,0,0,.85),inset 0 0 18px rgba(255,170,60,.10),0 0 0 2px #0b0703;
+}
+html body .crt::before{opacity:1;mix-blend-mode:normal;z-index:5;background:repeating-linear-gradient(0deg,rgba(0,0,0,.28) 0 1px,transparent 1px 3px)}
+/* scanlines sit on the glass, under the cards: phosphor text gets its own scanlines */
+html body :is(.question,.topline,.hint,.packLabel,.final,.theory){background-image:none}
+html body .crt::after{background:linear-gradient(rgba(255,190,90,.05),transparent)}
+.space-nebula,.space-meteors{display:none}
+html body .space-stars{opacity:.22;filter:sepia(1) saturate(4) hue-rotate(-12deg)}
+#crt .screen-ui::before{content:"";position:absolute;inset:0;pointer-events:none;z-index:-1;
+ background:radial-gradient(ellipse 70% 50% at 50% 45%,rgba(255,160,50,.07),transparent 70%)}
+/* phosphor type */
+html body .topline{font:400 13px/1 var(--vt);letter-spacing:.14em;color:var(--ph);border-bottom:1px dashed var(--ph-dim);text-shadow:0 0 6px rgba(255,170,60,.55)}
+html body .topline .step{font:inherit;color:var(--ph-hi);background:transparent;border:0;padding:0}
+html body .topline .step::before{content:"[ "}html body .topline .step::after{content:" ]"}
+html body .question{font:400 clamp(16px,2.3vw,24px)/1.15 var(--vt);color:var(--ph-hi);letter-spacing:.04em;
+ text-shadow:0 0 8px rgba(255,170,60,.65),0 0 22px rgba(255,140,40,.25)}
+html body .question::after{content:"";display:inline-block;width:.55em;height:.95em;margin-left:.2em;vertical-align:-.12em;background:var(--ph);box-shadow:0 0 8px var(--ph);animation:phCursor 1s steps(1) infinite}
+@keyframes phCursor{50%{opacity:0}}
+html body .section.active .question{animation:phType .55s steps(22,end) both}
+@keyframes phType{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+html body .hint{font:400 15px/1.2 var(--vt);color:var(--ph-dim);letter-spacing:.08em}
+html body .hint.collected{color:var(--ph)}
+html body .packLabel{font:400 16px/1 var(--vt);color:var(--ph);letter-spacing:.12em;text-shadow:0 0 6px rgba(255,170,60,.45);
+ display:flex;align-items:center;gap:8px}
+html body .packLabel::after{content:"";flex:1;border-top:1px dashed var(--ph-dim)}
+html body .terminalLog{color:var(--ph);font:400 11px/1.35 var(--vt);border-left-color:var(--ph-dim);text-shadow:0 0 6px rgba(255,170,60,.5)}
+/* progress: a segmented charge bar */
+html body .theoryPanel{background:rgba(255,170,60,.04);border:1px solid var(--ph-dim);box-shadow:none;border-radius:4px;backdrop-filter:none}
+html body .progressTrack{height:10px;border:1px solid var(--ph-dim);border-radius:2px;background:transparent;padding:1px}
+html body .progressFill{border-radius:0;background:repeating-linear-gradient(90deg,var(--ph) 0 6px,transparent 6px 8px);box-shadow:0 0 8px rgba(255,170,60,.6)}
+html body .progressPct{font:400 14px/1 var(--vt);color:var(--ph-hi);text-shadow:0 0 6px rgba(255,170,60,.6)}
+/* buttons on the glass */
+html body .screenBtn{font:400 17px/1 var(--vt);letter-spacing:.1em;border-radius:4px;box-shadow:none;transition:background .15s,color .15s,box-shadow .15s}
+html body .screenBtn.secondary,html body #backBtn{background:transparent;border:1px solid var(--ph-dim);color:var(--ph)}
+html body .screenBtn.primary{background:var(--ph);border:1px solid var(--ph-hi);color:#1b1004;text-shadow:none;box-shadow:0 0 14px rgba(255,170,60,.45)}
+html body .screenBtn.primary:hover:not(:disabled){background:var(--ph-hi);box-shadow:0 0 22px rgba(255,190,90,.6);transform:none;filter:none}
+html body .screenBtn:disabled{opacity:.3}
+html body .final,html body .crt.reveal .final{font:400 18px/1.3 var(--vt);color:var(--ph-hi);text-shadow:0 0 8px rgba(255,170,60,.6);letter-spacing:.06em}
+html body .theory,html body .crt.reveal .theory{font:400 17px/1.2 var(--vt);color:var(--ph);letter-spacing:.12em}
+html body .execText{font:400 26px/1.2 var(--vt);color:var(--ph-hi);text-shadow:0 0 14px rgba(255,170,60,.8);letter-spacing:.08em}
+html body .overlay{background:rgba(10,6,2,.94)}
+/* the garment: the hero, lit like a product shot */
+html body .livePreviewPane .livePreviewFrame::before{background:radial-gradient(ellipse,rgba(255,200,120,.22) 0%,rgba(255,150,60,.08) 40%,transparent 70%);filter:blur(10px)}
+html body .livePreviewPane .livePreviewFrame::after{content:"";position:absolute;left:22%;right:22%;bottom:4%;height:7%;border-radius:50%;
+ background:radial-gradient(ellipse,rgba(0,0,0,.55),transparent 70%);z-index:-1}
+html body .livePreviewPane canvas,html body #realisticPreview{filter:drop-shadow(0 10px 14px rgba(0,0,0,.55));animation:heroFloat 5s ease-in-out infinite}
+@keyframes heroFloat{50%{transform:translateY(-5px)}}
+html body .crt.reveal .realisticPreviewFrame{filter:drop-shadow(0 0 26px rgba(255,170,60,.25))}
+
+/* ---------- collectible cards ---------- */
+html body .option{position:relative;background:linear-gradient(180deg,var(--card),var(--card-2));color:var(--ink);
+ border:0;border-radius:9px;padding:6px;box-shadow:0 1px 0 rgba(255,255,255,.6) inset,0 3px 0 #b49d78,0 8px 16px rgba(0,0,0,.45);
+ font:700 9px/1.1 var(--sans);letter-spacing:.08em;text-transform:uppercase;
+ display:flex;flex-direction:column;align-items:stretch;gap:5px;transition:transform .16s ease,box-shadow .16s ease,filter .16s ease}
+html body .option:hover:not(:disabled){transform:translateY(-2px);filter:none;background:linear-gradient(180deg,#fff7e8,var(--card))}
+html body .option:active:not(:disabled){transform:translateY(2px);box-shadow:0 1px 0 #b49d78,0 3px 8px rgba(0,0,0,.45)}
+html body .option .icon{display:flex;align-items:center;justify-content:center;margin:0;border-radius:6px;
+ background:radial-gradient(ellipse at 50% 35%,#fffaf0 0%,#efe2c8 100%);box-shadow:inset 0 0 0 1px rgba(32,23,13,.08);filter:none;min-height:34px}
+html body .option .tiny{font:inherit;color:var(--ink);text-align:center;padding:0 2px}
+html body .option .sub{font:600 8px/1 var(--sans);letter-spacing:.1em;color:var(--ink-2);text-align:center}
+/* chosen card: lifted, amber ring, sheen sweeping across */
+html body .option.selected{background:linear-gradient(180deg,#fff6e3,#f6e6c6);color:var(--ink);transform:translateY(-3px);
+ box-shadow:0 0 0 2px var(--ph),0 0 18px rgba(255,170,60,.55),0 10px 18px rgba(0,0,0,.5)}
+html body .option.selected::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+ background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.55) 45%,rgba(255,220,150,.35) 52%,transparent 66%);background-size:250% 100%;
+ animation:cardSheen 2.6s ease-in-out infinite;mix-blend-mode:soft-light}
+@keyframes cardSheen{0%{background-position:120% 0}60%,100%{background-position:-60% 0}}
+html body .option.selected::before{content:"\2713";position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;
+ background:var(--ph);color:#1b1004;font:700 12px/20px var(--sans);text-align:center;box-shadow:0 0 10px rgba(255,170,60,.8);z-index:2}
+html body .option.selected[data-order]::before{content:attr(data-order)}
+html body .option:disabled:not(.locked){opacity:.32;filter:grayscale(.6)}
+/* locked: the card is face down */
+html body .option.locked{background:repeating-linear-gradient(135deg,#1a1208 0 6px,#140d05 6px 12px);color:var(--ph-dim);
+ box-shadow:inset 0 0 0 1px var(--ph-faint),0 6px 12px rgba(0,0,0,.4);border:0}
+html body .option.locked .icon{background:rgba(255,170,60,.05);box-shadow:inset 0 0 0 1px var(--ph-faint)}
+html body .option.locked .tiny,html body .option.locked .sub{color:var(--ph-dim)}
+html body .lockBadge{filter:sepia(1) saturate(3) drop-shadow(0 0 4px rgba(255,170,60,.6))}
+/* garments: the white piece on its card */
+html body .card-product .icon img{width:100%!important;height:100%!important;object-fit:contain}
+html body .card-product .icon{aspect-ratio:1/1;background:radial-gradient(ellipse at 50% 38%,#8f8371 0%,#4f4537 75%,#3c342a 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.2),inset 0 -12px 18px rgba(0,0,0,.25)}
+html body .card-product .icon img{filter:drop-shadow(0 6px 6px rgba(0,0,0,.45));transform:scale(1.4)}
+/* fabric chips */
+html body .card-chip .chipFabric{aspect-ratio:4/3;background:var(--chip);
+ box-shadow:inset 0 0 0 1px rgba(0,0,0,.12),inset 0 -10px 16px rgba(0,0,0,.18),inset 0 8px 12px rgba(255,255,255,.18);position:relative;overflow:hidden}
+html body .card-chip .chipFabric::after{content:"";position:absolute;inset:0;
+ background:repeating-linear-gradient(0deg,rgba(0,0,0,.07) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(255,255,255,.08) 0 1px,transparent 1px 3px)}
+html body .card-chip .chipFabric::before{content:"";position:absolute;right:-12%;bottom:-30%;width:60%;height:60%;transform:rotate(-30deg);
+ background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(0,0,0,.18));box-shadow:-2px -2px 6px rgba(0,0,0,.25)}
+/* booster packs: crimped foil with the world's emblem */
+html body .card-pack{padding:10px 6px 12px;
+ background:linear-gradient(135deg,#efe2c6 0%,#c9b088 28%,#f8eedb 47%,#b99c70 66%,#efe0c2 100%)!important;
+ -webkit-mask:conic-gradient(from 135deg at top,#0000,#000 1deg 89deg,#0000 90deg) top/9px 51% repeat-x,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/9px 51% repeat-x;
+ mask:conic-gradient(from 135deg at top,#0000,#000 1deg 89deg,#0000 90deg) top/9px 51% repeat-x,conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) bottom/9px 51% repeat-x}
+html body .card-pack .icon{background:radial-gradient(circle at 50% 45%,rgba(255,255,255,.75),rgba(255,255,255,0) 70%);box-shadow:none}
+html body .card-pack.selected{outline:2px solid var(--ph);outline-offset:-2px}
+html body .card-pack.selected::before{top:6px;right:6px}
+html body .card-pack.locked{background:repeating-linear-gradient(135deg,#1a1208 0 6px,#140d05 6px 12px)!important}
+/* icon cards: illustrated art gets a faint holo edge */
+html body .card-icon.has-art .icon{background:radial-gradient(ellipse at 50% 40%,#fffdf6 0%,#ece0c6 100%)}
+html body .card-icon.has-art:not(.locked){background:linear-gradient(180deg,var(--card),var(--card-2)) padding-box,
+ linear-gradient(135deg,#ffd9a0,#b9e4ff,#f7b6e8,#ffe9a8) border-box;border:1.5px solid transparent}
+/* lock message toast */
+#lockToast{position:absolute;left:50%;top:52px;transform:translate(-50%,-40px);opacity:0;z-index:45;max-width:86%;padding:10px 14px;
+ background:#140d05;border:1px solid var(--ph);border-radius:4px;color:var(--ph-hi);font:400 16px/1.25 var(--vt);letter-spacing:.05em;
+ text-align:center;box-shadow:0 0 18px rgba(255,170,60,.35);transition:transform .25s ease,opacity .25s ease;pointer-events:none}
+#lockToast.show{transform:translate(-50%,0);opacity:1}
+
+/* desktop: the small screen keeps a single column of slim cards (art left, name right) */
+@media (min-width:701px){
+ html body .option{flex-direction:row;align-items:center;gap:8px;min-height:40px;padding:5px 8px 5px 5px;text-align:left}
+ html body .option .icon{width:34px;min-width:34px;height:30px;min-height:0;font-size:18px}
+ html body .option .icon img{width:26px!important;height:26px!important}
+ html body .option .tiny{text-align:left;font-size:8px}
+ html body .option .sub{display:none}
+ html body .card-product .icon{aspect-ratio:auto;width:38px}
+ html body .card-chip .chipFabric{aspect-ratio:auto}
+ html body .card-pack{padding:6px 8px}
+ html body #icons .optionGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ html body #icons .option{flex-direction:column;gap:3px;padding:4px;min-height:0}
+ html body #icons .option .icon{width:100%;min-width:0;height:28px}
+ html body #icons .option .tiny{text-align:center;font-size:6.5px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ html body #icons .option.selected::before{width:14px;height:14px;font-size:9px;line-height:14px}
+ html body .option.selected::before{width:16px;height:16px;font-size:10px;line-height:16px;top:-5px;right:-5px}
+ html body .question{font-size:clamp(14px,1.9vw,21px)}
+}
+/* phones: big cards */
+@media (max-width:700px){
+ html body .topline{font-size:16px}
+ html body .question{font-size:27px;line-height:1.08;margin:14px 0 14px}
+ html body .option{min-height:0;padding:8px;font-size:11px;gap:7px;border-radius:12px}
+ html body .option .icon{font-size:34px;min-height:64px}
+ html body #icons .option{min-height:0;padding:6px;font-size:9.5px;border-radius:10px}
+ html body #icons .option .icon{min-height:58px;font-size:30px}
+ html body .option .icon img{width:46px!important;height:46px!important}
+ html body .card-product .icon{min-height:0}
+ html body .card-chip .chipFabric{min-height:0}
+ html body .card-pack{padding:14px 8px 16px}
+ html body .card-pack .icon{min-height:56px}
+ html body .option .sub{font-size:9px}
+ html body .hint{font-size:17px}
+ html body .packLabel{font-size:19px;margin:18px 0 10px}
+ html body .theoryPanel{padding:8px 10px;border-radius:4px}
+ html body .theoryPanel .progressPct{font-size:16px}
+ html body .screen-ui>.actionRow .screenBtn{font-size:21px;border-radius:6px;min-height:54px}
+ html body .section .actionRow .screenBtn{font-size:21px;border-radius:6px}
+ html body .final,html body .crt.reveal .final{font-size:21px}
+ html body .theory,html body .crt.reveal .theory{font-size:19px}
+ html body .crt:has(.section.active[data-step="5"]):not(.reveal) .screen-ui>.actionRow::after{font:400 18px/1.15 var(--vt);border-radius:6px;letter-spacing:.06em;
+   border-color:rgba(255,90,60,.8);color:#ffc2b0}
+ #lockToast{font-size:18px}
+}
+@media (prefers-reduced-motion:reduce){
+ html body .question::after,html body .option.selected::after,html body .livePreviewPane canvas,html body #realisticPreview,html body .section.active .question{animation:none}
+}
 </style>
 </head>
 <body>
@@ -823,8 +993,11 @@ function showLock(name,hint){
   clickSound(140);lockMsg=[`> 🔒 ${name} IS LOCKED`,`> ${hint}`];
   if(storeLoggedIn===false) lockMsg.push("> GOT A CODE? LOG IN TO USE IT");
   else if(storeLoggedIn) lockMsg.push("> GOT A CODE? ENTER IT ON OUR UNLOCK PAGE");
-  clearTimeout(lockMsgTimer);lockMsgTimer=setTimeout(()=>{lockMsg=null;renderTerminalLog();},4500);
+  clearTimeout(lockMsgTimer);lockMsgTimer=setTimeout(()=>{lockMsg=null;renderTerminalLog();const t=document.getElementById("lockToast");if(t)t.classList.remove("show");},4500);
   renderTerminalLog();
+  let t=document.getElementById("lockToast");
+  if(!t){t=document.createElement("div");t.id="lockToast";t.setAttribute("role","status");document.getElementById("crt").appendChild(t);}
+  t.innerHTML=lockMsg.map(x=>`<div>${x.replace(/^> /,"")}</div>`).join("");t.classList.add("show");
 }
 
 let audioCtx=null;
@@ -1033,32 +1206,35 @@ async function renderRealisticPreview(){
     canvases.slice(1).forEach(c=>c.getContext('2d').drawImage(canvas,0,0));
   }catch(e){ctx.fillStyle='#eee';ctx.fillRect(0,0,W,H);ctx.fillStyle='#222';ctx.font='18px sans-serif';ctx.fillText('PREVIEW ERROR',30,50);canvases.slice(1).forEach(c=>c.getContext('2d').drawImage(canvas,0,0));}
 }
-function makeButton(label,icon,selected,disabled,fn,lockHint){
-  const b=document.createElement("button");b.className="option"+(selected?" selected":"")+(lockHint?" locked":"");b.disabled=disabled&&!lockHint;
+function makeButton(label,icon,selected,disabled,fn,lockHint,kind,sub){
+  const b=document.createElement("button");b.className="option"+(selected?" selected":"")+(lockHint?" locked":"")+(kind?" card-"+kind:"");b.disabled=disabled&&!lockHint;
+  b.setAttribute("aria-pressed",selected?"true":"false");
   if(lockHint){b.setAttribute("aria-label",label+", locked. "+lockHint.toLowerCase());b.title="Locked: "+lockHint.toLowerCase();}
   if(icon){
-    const isImage=typeof icon==="string" && icon.startsWith("data:image/");
-    b.innerHTML=isImage?`<span class="icon"><img src="${icon}" style="width:28px;height:28px;object-fit:contain;display:block"></span>`:`<span class="icon">${icon}</span>`;
-  }
-  b.innerHTML+=`<span class="tiny">${label}</span>`;
+    const isImage=typeof icon==="string" && (icon.startsWith("data:image/")||/\.(webp|png|jpg)$/.test(icon));
+    if(isImage) b.classList.add("has-art");
+    b.innerHTML=isImage?`<span class="icon"><img src="${icon}" alt="" loading="lazy" style="width:28px;height:28px;object-fit:contain;display:block"></span>`:`<span class="icon">${icon}</span>`;
+  } else if(kind==="chip") b.innerHTML=`<span class="icon chipFabric" aria-hidden="true"></span>`;
+  b.innerHTML+=`<span class="tiny">${label}</span>`+(sub?`<span class="sub">${sub}</span>`:"");
   if(lockHint){b.innerHTML+=`<span class="lockBadge" aria-hidden="true">🔒</span>`;b.onclick=()=>showLock(label,lockHint);}
   else b.onclick=fn;
   return b;
 }
 function renderProducts(){
   const e=document.getElementById("products");e.innerHTML="";
-  products.forEach(([n,g])=>e.appendChild(makeButton(n,g,state.product===n,false,()=>{clickSound();state.product=n;state.executed=false;render()})));
+  const ART={"SWIM SHORTS":"mockups/shorts.webp","BIKINI":"mockups/bikini.webp","ONE PIECE":"mockups/onepiece.webp","TOWEL":"mockups/towel.webp","BUCKET HAT":"mockups/buckethat.webp"};
+  products.forEach(([n,g])=>e.appendChild(makeButton(n,ART[n]||g,state.product===n,false,()=>{clickSound();state.product=n;state.executed=false;render()},null,"product")));
 }
 function renderBases(){
   const e=document.getElementById("bases");e.innerHTML="";
-  bases.forEach(([n,c])=>{const b=makeButton(n,null,state.base===n,false,()=>{clickSound();state.base=n;state.bg=c;state.executed=false;render()});b.style.background=c==="pattern"?"repeating-conic-gradient(#e8dfc9 0 25%,#151b17 0 50%) 50%/16px 16px":c;e.appendChild(b)})
+  bases.forEach(([n,c])=>{const b=makeButton(n,null,state.base===n,false,()=>{clickSound();state.base=n;state.bg=c;state.executed=false;render()},null,"chip");b.style.setProperty("--chip",c==="pattern"?"repeating-conic-gradient(#e8dfc9 0 25%,#151b17 0 50%) 50%/22px 22px":c);e.appendChild(b)})
 }
 function renderPacks(){
   const e=document.getElementById("packs");e.innerHTML="";
   Object.entries(PACKS).forEach(([k,p])=>e.appendChild(makeButton(p.name,p.emoji,state.packs.includes(k),!state.packs.includes(k)&&state.packs.length>=MAX_PACKS,()=>{
     clickSound(); if(state.packs.includes(k)){state.packs=state.packs.filter(x=>x!==k);state.icons=state.icons.filter(x=>!x.startsWith(k+":"))}
     else state.packs.push(k); state.executed=false;render()
-  },packLocked(k)?LOCKED_PACKS[k]:null)));
+  },packLocked(k)?LOCKED_PACKS[k]:null,"pack",p.icons.length+" ICONS")));
   const keys=Object.keys(PACKS), got=keys.filter(k=>!packLocked(k)).length;
   const c=document.getElementById("packsCollected");
   if(c)c.textContent=got<keys.length?`WORLDS COLLECTED ${got} / ${keys.length}`:"";
@@ -1070,13 +1246,15 @@ function renderIcons(){
     const p=PACKS[k],wrap=document.createElement("div");wrap.className="packGroup";
     const lab=document.createElement("div");lab.className="packLabel";lab.textContent=`${p.emoji} ${p.name}`;wrap.appendChild(lab);
     const grid=document.createElement("div");grid.className="optionGrid";
-    p.icons.forEach(([n,g],i)=>{const key=k+":"+i;grid.appendChild(makeButton(n,g,state.icons.includes(key),!state.icons.includes(key)&&state.icons.length>=MAX_ICONS,()=>{
+    p.icons.forEach(([n,g],i)=>{const key=k+":"+i;const card=makeButton(n,g,state.icons.includes(key),!state.icons.includes(key)&&state.icons.length>=MAX_ICONS,()=>{
       if(state.icons.includes(key)) state.icons=state.icons.filter(x=>x!==key);
       else if(state.icons.length>=MAX_ICONS) return;   // hard cap: 3 icons per design
       else state.icons.push(key);
       clickSound();
       state.executed=false;render()
-    },(iconLocked(key)&&!state.icons.includes(key))?LOCKED_ICONS[iconLockName(key)]:null))});
+    },(iconLocked(key)&&!state.icons.includes(key))?LOCKED_ICONS[iconLockName(key)]:null,"icon");
+      if(state.icons.includes(key)) card.dataset.order=state.icons.indexOf(key)+1;
+      grid.appendChild(card)});
     wrap.appendChild(grid);e.appendChild(wrap)
   })
 }
