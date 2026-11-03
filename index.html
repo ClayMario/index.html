@@ -843,6 +843,59 @@ html body .card-icon.has-art:not(.locked){background:linear-gradient(180deg,var(
 @media (prefers-reduced-motion:reduce){
  html body .question::after,html body .option.selected::after,html body .livePreviewPane canvas,html body #realisticPreview,html body .section.active .question{animation:none}
 }
+
+/* ===== EXECUTE CEREMONY: surge, print pass, rarity badge, name, discovery ===== */
+.crt.surge{animation:crtSurge .6s ease-out}
+@keyframes crtSurge{0%{filter:brightness(1)}18%{filter:brightness(3) saturate(0)}36%{transform:scaleY(.03);filter:brightness(5) saturate(0)}58%{transform:scaleY(1.02);filter:brightness(1.6)}100%{transform:none;filter:brightness(1)}}
+.crt.shake{animation:crtShake .38s ease-out}
+@keyframes crtShake{15%{transform:translate(-4px,2px)}35%{transform:translate(4px,-2px)}55%{transform:translate(-3px,1px)}75%{transform:translate(2px,-1px)}100%{transform:none}}
+.crt.ceremony .section[data-step="5"] .actionRow,.crt.ceremony #theoryId,.crt.ceremony #discoveryLine{visibility:hidden}
+.crt.reveal #finalText{display:none}
+.realisticPreviewFrame{position:relative}
+.realisticPreviewFrame .blankGarment{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:0;filter:drop-shadow(0 10px 14px rgba(0,0,0,.55))}
+.realisticPreviewFrame #realisticPreview{position:relative;z-index:1}
+.realisticPreviewFrame.printing #realisticPreview{animation:printIn 1.5s steps(26,end) both!important}
+@keyframes printIn{from{clip-path:inset(0 0 100% 0)}to{clip-path:inset(0 0 0 0)}}
+.realisticPreviewFrame.printing::after{content:"";position:absolute;left:6%;right:6%;top:0;height:3px;z-index:3;border-radius:2px;
+ background:var(--ph,#3dff7f);box-shadow:0 0 10px var(--ph,#3dff7f),0 0 26px rgba(61,255,127,.7);animation:printHead 1.5s steps(26,end) both}
+@keyframes printHead{from{top:0}to{top:100%}}
+.rarityBadge{align-self:center;display:inline-block;margin:8px auto 2px;padding:5px 14px 4px;border:1px solid currentColor;border-radius:3px;
+ font:400 19px/1 "VT323",monospace;letter-spacing:.24em;color:#a9e9bd;background:rgba(0,0,0,.25);text-align:center}
+.rarityBadge[hidden]{display:none}
+.rarityBadge.tier-common{color:#a9e9bd;box-shadow:0 0 8px rgba(169,233,189,.25)}
+.rarityBadge.tier-rare{color:#7fd6ff;box-shadow:0 0 12px rgba(127,214,255,.55);text-shadow:0 0 8px rgba(127,214,255,.8)}
+.rarityBadge.tier-epic{color:#d9a8ff;box-shadow:0 0 16px rgba(201,140,255,.6);text-shadow:0 0 10px rgba(201,140,255,.9)}
+.rarityBadge.tier-legendary{color:#ffe58a;border-color:#ffe58a;box-shadow:0 0 22px rgba(255,214,90,.75),inset 0 0 12px rgba(255,214,90,.3);
+ background:linear-gradient(90deg,#ffe98a,#ff9ad5,#9ae6ff,#c6ffb0,#ffe98a) 0 0/220% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+ animation:holoText 2.2s linear infinite}
+@keyframes holoText{to{background-position:-220% 0}}
+.rarityBadge.slam{animation:badgeSlam .5s cubic-bezier(.2,1.7,.4,1) both}
+.rarityBadge.tier-legendary.slam{animation:badgeSlam .5s cubic-bezier(.2,1.7,.4,1) both,holoText 2.2s linear .5s infinite}
+@keyframes badgeSlam{0%{transform:scale(2.8);opacity:0;filter:blur(3px)}55%{transform:scale(.9);opacity:1;filter:none}100%{transform:scale(1)}}
+.theoryName{font:400 24px/1.1 "VT323",monospace;color:var(--ph-hi,#c6ffd6);text-align:center;letter-spacing:.05em;margin:6px 4px 2px;
+ text-shadow:0 0 10px rgba(61,255,127,.6);min-height:1.1em}
+.theoryName.typing::after{content:"";display:inline-block;width:.5em;height:.9em;margin-left:.15em;vertical-align:-.1em;background:var(--ph,#3dff7f)}
+.discovery{font:400 15px/1.25 "VT323",monospace;letter-spacing:.07em;color:var(--ph,#3dff7f);text-align:center;margin-top:5px;min-height:1.25em;opacity:.9}
+.discovery.first{color:#ffe58a;text-shadow:0 0 10px rgba(255,214,90,.8);animation:discPulse 1.4s ease-in-out 3}
+.discovery.yours{color:#ffe58a}
+.discovery.open{opacity:.75}
+@keyframes discPulse{50%{transform:scale(1.06);text-shadow:0 0 18px rgba(255,214,90,1)}}
+.sparkBurst{position:absolute;left:50%;top:45%;z-index:4;pointer-events:none}
+.sparkBurst i{position:absolute;left:0;top:0;font-style:normal;font-size:14px;color:#d9a8ff;text-shadow:0 0 8px #c98cff;
+ animation:spark 1.1s ease-out forwards;transform:rotate(var(--a)) translateX(0)}
+.sparkBurst.big i{color:#ffe58a;text-shadow:0 0 10px #ffd65a;font-size:17px}
+@keyframes spark{0%{opacity:1;transform:rotate(var(--a)) translateX(0) scale(.6)}100%{opacity:0;transform:rotate(var(--a)) translateX(var(--d)) scale(1.2)}}
+@media (max-width:700px){
+ .rarityBadge{font-size:18px;margin-top:6px}
+ .theoryName{font-size:22px}
+ .discovery{font-size:14px}
+}
+@media (min-width:701px){
+ .rarityBadge{font-size:13px;padding:3px 9px 2px;margin-top:2px}
+ .theoryName{font-size:16px;margin-top:3px}
+ .discovery{font-size:11px}
+}
+@media (prefers-reduced-motion:reduce){.rarityBadge.slam,.discovery.first,.rarityBadge.tier-legendary{animation:none}}
 </style>
 </head>
 <body>
@@ -896,8 +949,11 @@ html body .card-icon.has-art:not(.locked){background:linear-gradient(180deg,var(
         <div class="section" data-step="5">
           <div class="question">YOUR THEORY</div>
           <div class="preview realisticPreviewFrame"><canvas id="realisticPreview" aria-label="Your realistic swim shorts theory"></canvas></div>
+          <div class="rarityBadge" id="rarityBadge" hidden></div>
+          <div class="theoryName" id="theoryName" aria-live="polite"></div>
           <div class="final" id="finalText">READY WHEN YOU ARE.</div>
           <div class="theory" id="theoryId">THEORY #BT-····-····-····</div>
+          <div class="discovery" id="discoveryLine" aria-live="polite"></div>
           <div class="actionRow">
             <button class="screenBtn primary" id="storeBtn" style="display:none" onclick="sendToStore()">ADD TO CART →</button>
             <button class="screenBtn secondary" id="startOverBtn" style="display:none" onclick="startOver()">START OVER</button>
@@ -1043,6 +1099,13 @@ function render(){
   document.getElementById("storeBtn").style.display=finished?"inline-block":"none";
   document.getElementById("startOverBtn").style.display=finished?"inline-block":"none";
   document.getElementById("theoryId").textContent=`THEORY #${state.theory||"BT-····-····-····"}`;
+  {const prof=finished?(state.profile||(state.profile=theoryProfile(state.base,state.icons,state.theory))):null;
+   const busy=document.getElementById("crt").classList.contains("ceremony");
+   const b=document.getElementById("rarityBadge"),nm=document.getElementById("theoryName");
+   if(!prof){b.hidden=true;nm.textContent="";}
+   else if(!busy){b.hidden=false;b.textContent="◆ "+prof.tier+(prof.lucky?" ✦":"");b.className="rarityBadge tier-"+prof.tier.toLowerCase();nm.textContent=prof.name;}
+   else{b.hidden=true;nm.textContent="";}
+   renderDiscovery();}
   const lockedNow=lockedInDesign();
   document.getElementById("finalText").textContent=state.executed?"YOUR THEORY IS READY.":lockedNow.length&&state.step===TOTAL_STEPS?`🔒 LOCKED: ${lockedNow.join(", ")}. UNLOCK TO ORDER.`:"READY WHEN YOU ARE.";
   if(lockedNow.length&&state.step===TOTAL_STEPS&&!state.executed) document.getElementById("mainActionBtn").disabled=true;
@@ -1381,23 +1444,116 @@ window.addEventListener("message",e=>{
   const r=loadTheory(d.theoryId);
   try{e.source&&e.source.postMessage({type:"beach-theory-load-result",ok:r.ok,error:r.error||null,theoryId:r.theoryId||null},e.origin==="null"?"*":e.origin);}catch(err){}
 });
+// ===== THEORY PROFILE: every Theory ID gets a name and a rarity =====
+// Both come from the design itself, so the same design always gets the same
+// name and rarity, on any device.
+const RARE_PACKS=new Set(["EGYPT","DUCKS","SPEED"]), RARE_ICONS=new Set(["SEA:WHALE","COSMOS:ALIEN"]);
+const BASE_WORDS={"CREAM":["Sunbleached","Vanilla","Seashell"],"SOFT LAVENDER":["Lilac","Lavender Haze","Daydream"],"BLACK":["Midnight","Obsidian","After Dark"],
+  "OCEAN":["Deep Blue","Riptide","Atlantic"],"PINK":["Flamingo","Bubblegum","Hot Pink"],"SUNSET":["Golden Hour","Heatwave","Sundown"],"CHECKER":["Checkmate","Grandmaster","Chequered"]};
+const GROUP_WORDS=["Society","Club","Syndicate","Collective","Republic","Parade","League","Expedition","Cartel","Assembly","Union","Committee","Orchestra","Brigade","Dynasty","Theory"];
+const TIERS=["COMMON","RARE","EPIC","LEGENDARY"];
+function hashStr(s){let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;}
+function titleCase(s){return String(s).toLowerCase().replace(/(^|\s)\S/g,c=>c.toUpperCase());}
+function theoryProfile(base,icons,id){
+  if(!icons||!icons.length) return null;
+  const h=hashStr(String(id||base+icons.join()));
+  const words=BASE_WORDS[base]||["Coastal","Tidal","Salty"];
+  const name=`${words[h%words.length]} ${titleCase(iconGlyph(icons[0])[0])} ${GROUP_WORDS[(h>>>4)%GROUP_WORDS.length]}`;
+  // rarer ingredients score higher: rare drops 3, illustrated icons 2, others 1;
+  // mixing worlds, the checker base and a full set of 3 add a point each
+  let score=0;const packs=new Set();
+  icons.forEach(k=>{const p=k.split(":")[0],v=iconGlyph(k)[1];packs.add(p);
+    score+=(RARE_PACKS.has(p)||RARE_ICONS.has(iconRegistryName(k)))?3:(typeof v==="string"&&v.startsWith("data:image/"))?2:1;});
+  score+=Math.max(0,packs.size-1)+(base==="CHECKER"?1:0)+(icons.length===3?1:0);
+  let tier=score>=11?3:score>=8?2:score>=5?1:0;
+  const lucky=((h>>>9)%13===0)&&tier<3; if(lucky) tier++;   // about 1 in 13 designs rolls one tier higher
+  return {name,tier:TIERS[tier],tierIdx:tier,lucky};
+}
+
+// ===== EXECUTE: the ceremony =====
+// power surge -> the print head scans the design onto the blank garment ->
+// the rarity badge slams in -> the name types out -> the discovery line.
+function reducedMotion(){return matchMedia("(prefers-reduced-motion: reduce)").matches;}
+async function renderBlankGarment(){
+  const mk=GARMENT_MOCKUPS[state.product];if(!mk)return null;
+  const c=document.createElement("canvas");c.width=819;c.height=1024;
+  const saved=state.icons,tok=++realisticRenderToken;state.icons=[];
+  try{await renderGarmentMockup(mk,tok,[c]);}catch(e){return null;}finally{state.icons=saved;}
+  return tok===realisticRenderToken?c:null;
+}
+async function printPass(blank){
+  const frame=document.querySelector(".section[data-step='5'] .realisticPreviewFrame");if(!frame)return;
+  await renderRealisticPreview();
+  if(blank){blank.className="blankGarment";frame.appendChild(blank);}
+  frame.classList.add("printing");
+  for(let i=0;i<8;i++){clickSound(520+i*40);await wait(190);}
+  frame.classList.remove("printing");if(blank)blank.remove();
+}
+async function slamBadge(p){
+  const b=document.getElementById("rarityBadge"),crt=document.getElementById("crt");
+  b.hidden=false;b.textContent="◆ "+p.tier+(p.lucky?" ✦":"");b.className="rarityBadge tier-"+p.tier.toLowerCase();
+  void b.offsetWidth;b.classList.add("slam");crt.classList.remove("shake");void crt.offsetWidth;crt.classList.add("shake");
+  clickSound(p.tierIdx>=2?70:110);
+  if(p.tierIdx>=2)burst(p.tierIdx===3);
+  await wait(650);
+}
+function burst(big){
+  const frame=document.querySelector(".section[data-step='5'] .realisticPreviewFrame");if(!frame)return;
+  const box=document.createElement("div");box.className="sparkBurst"+(big?" big":"");
+  for(let i=0;i<(big?18:10);i++){const sp=document.createElement("i");sp.textContent=i%3?"✦":"✧";
+    sp.style.setProperty("--a",(i*(360/(big?18:10))+Math.random()*12)+"deg");sp.style.setProperty("--d",(big?120:80)+Math.random()*50+"px");box.appendChild(sp);}
+  frame.appendChild(box);setTimeout(()=>box.remove(),1300);
+}
+async function typeName(p){
+  const el=document.getElementById("theoryName");el.textContent="";el.classList.add("typing");
+  for(let i=0;i<p.name.length;i++){el.textContent=p.name.slice(0,i+1);if(i%3===0)clickSound(1300);await wait(38);}
+  el.classList.remove("typing");
+}
 async function executeTheory(){
   document.getElementById("mainActionBtn").disabled=true;
   document.getElementById("backBtn").disabled=true;
+  const crt=document.getElementById("crt"),fast=reducedMotion();
   const o=document.getElementById("execOverlay"),t=document.getElementById("execText");
-  o.classList.add("active");t.textContent="FINALIZING DESIGN";await wait(650);
-  t.textContent="CALCULATING";await wait(500);
-  t.textContent="THEORY EXECUTED";await wait(450);
-  o.classList.remove("active");
+  o.classList.add("active");t.textContent="POWER SURGE";if(!fast)crt.classList.add("surge");await wait(fast?150:600);
+  t.textContent="PRINTING THEORY";await wait(fast?150:450);
+  o.classList.remove("active");crt.classList.remove("surge");
   state.theory=theoryIdFor(state.base,state.icons);state.executed=true;
+  state.profile=theoryProfile(state.base,state.icons,state.theory);state.discovery=null;
   document.getElementById("finalText").textContent="YOUR THEORY IS READY.";
-  flicker();render();
+  const blank=fast?null:await renderBlankGarment();
+  crt.classList.add("ceremony");flicker();render();
+  announceExecuted();
+  if(!fast&&state.profile){await printPass(blank);await slamBadge(state.profile);await typeName(state.profile);}
+  crt.classList.remove("ceremony");render();
+}
+// ===== FIRST DISCOVERED BY =====
+// In the store, the page asks the unlock helper who found this Theory ID first
+// (and logs a logged-in customer as the discoverer if nobody has).
+function announceExecuted(){
+  if(window.parent===window||!state.profile)return;
+  try{window.parent.postMessage({type:"beach-theory-executed",theoryId:state.theory,name:state.profile.name,tier:state.profile.tier},"*");}catch(e){}
+}
+window.addEventListener("message",e=>{
+  const d=e.data;if(!d||d.type!=="beach-theory-discovery"||d.theoryId!==state.theory)return;
+  state.discovery=d;renderDiscovery();
+});
+function renderDiscovery(){
+  const el=document.getElementById("discoveryLine");if(!el)return;
+  const d=state.executed?state.discovery:null, busy=document.getElementById("crt").classList.contains("ceremony");
+  el.className="discovery";
+  if(!d||!d.ok||busy){el.textContent="";return;}
+  const when=d.at?new Date(d.at).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}).toUpperCase():"";
+  if(d.status==="first"){el.textContent="★ FIRST DISCOVERY! THIS THEORY IS NOW LOGGED TO YOU ★";el.classList.add("first");clickSound(880);}
+  else if(d.status==="yours"){el.textContent="★ DISCOVERED BY YOU · "+when;el.classList.add("yours");}
+  else if(d.status==="taken"){el.textContent="FIRST DISCOVERED BY "+String(d.by||"A BEACH THEORIST").toUpperCase()+(when?" · "+when:"");}
+  else if(d.status==="unclaimed"){el.textContent="NOBODY HAS FOUND THIS THEORY YET · LOG IN TO CLAIM IT";el.classList.add("open");}
+  else el.textContent="";
 }
 function back(){if(state.step>1){clickSound();state.step--;flicker();render()}}
 function startOver(){
   clickSound(140);
   state.step=1;state.product=null;state.base=null;state.bg="#f4ead5";
-  state.packs=[];state.icons=[];state.layout="SCATTER";state.executed=false;state.theory=null;state.loadedTheory=null;
+  state.packs=[];state.icons=[];state.layout="SCATTER";state.executed=false;state.theory=null;state.loadedTheory=null;state.profile=null;state.discovery=null;
   document.getElementById("mainActionBtn").disabled=false;
   document.getElementById("backBtn").disabled=false;
   flicker();render();
